@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نموذج طلب خدمة مساعدة بحثية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8fafc; /* gray-50 */
+        }
+        .form-container {
+            background-color: white;
+            border-radius: 1rem; /* rounded-2xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+        }
+        .form-header {
+            background: linear-gradient(135deg, #005C97, #363795);
+            color: white;
+            padding: 2rem;
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+        }
+        .form-label {
+            font-weight: 600; /* font-semibold */
+            color: #374151; /* gray-700 */
+        }
+        .form-input, .form-textarea, .form-select {
+            background-color: #f9fafb; /* gray-50 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            color: #111827; /* gray-900 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: #005C97;
+            box-shadow: 0 0 0 3px rgba(0, 92, 151, 0.2);
+        }
+        .form-checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background-color: #f9fafb;
+            border-radius: 0.5rem;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .form-checkbox-label:hover {
+            border-color: #005C97;
+        }
+        .form-checkbox:checked + .form-checkbox-label {
+            background-color: #eef6fc;
+            border-color: #005C97;
+            font-weight: 600;
+        }
+        .form-checkbox {
+            display: none;
+        }
+        .submit-btn {
+            background-color: #005C97;
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s, transform 0.2s;
+            width: 100%;
+        }
+        .submit-btn:hover {
+            background-color: #363795;
+            transform: translateY(-2px);
+        }
+        .required-star {
+            color: #ef4444; /* red-500 */
+            font-weight: bold;
+            margin-right: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <div class="form-container">
+            <div class="form-header text-center">
+                <h1 class="text-3xl font-bold">نموذج طلب خدمة مساعدة بحثية</h1>
+                <p class="mt-2 opacity-90">هذا النموذج هو خطوتنا الأولى معًا لفهم مشروعك البحثي بشكل أفضل. يرجى تعبئة الحقول التالية بدقة لمساعدتي في تقديم عرض مخصص وفعال.</p>
+            </div>
+
+            <form class="p-8 space-y-8">
+                <!-- القسم الأول: معلومات أساسية -->
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold border-b-2 border-gray-200 pb-2 text-gray-800">القسم الأول: معلومات أساسية</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="fullName" class="form-label block mb-2">الاسم الكامل<span class="required-star">*</span></label>
+                            <input type="text" id="fullName" class="form-input" placeholder="مثال: عبدالله بن محمد آل سعود" required>
+                        </div>
+                        <div>
+                            <label for="email" class="form-label block mb-2">البريد الإلكتروني<span class="required-star">*</span></label>
+                            <input type="email" id="email" class="form-input" placeholder="مثال: a.alsaud@example.com" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="researchTitle" class="form-label block mb-2">عنوان البحث المعتمد بالكامل<span class="required-star">*</span></label>
+                        <textarea id="researchTitle" rows="3" class="form-textarea" placeholder="اكتب هنا عنوان البحث كما تمت الموافقة عليه من قبل جهتك الأكاديمية" required></textarea>
+                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="university" class="form-label block mb-2">الجامعة والقسم الأكاديمي</label>
+                            <input type="text" id="university" class="form-input" placeholder="مثال: جامعة الملك سعود، قسم الإدارة العامة">
+                        </div>
+                        <div>
+                            <label for="degree" class="form-label block mb-2">الدرجة العلمية<span class="required-star">*</span></label>
+                            <select id="degree" class="form-select" required>
+                                <option value="" disabled selected>اختر الدرجة العلمية...</option>
+                                <option value="master">ماجستير</option>
+                                <option value="phd">دكتوراه</option>
+                                <option value="bachelor">بحث تخرج (بكالوريوس)</option>
+                                <option value="paper">ورقة علمية للنشر</option>
+                                <option value="other">أخرى</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- القسم الثاني: نطاق الخدمة -->
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold border-b-2 border-gray-200 pb-2 text-gray-800">القسم الثاني: نطاق الخدمة المطلوبة</h2>
+                     <p class="text-gray-600">ما هي طبيعة المساعدة التي تحتاجها؟ (يمكنك اختيار أكثر من خيار)<span class="required-star">*</span></p>
+                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div><input type="checkbox" id="service1" name="service" class="form-checkbox"><label for="service1" class="form-checkbox-label">إعداد خطة بحث (Proposal)</label></div>
+                        <div><input type="checkbox" id="service2" name="service" class="form-checkbox"><label for="service2" class="form-checkbox-label">الإطار النظري والدراسات السابقة</label></div>
+                        <div><input type="checkbox" id="service3" name="service" class="form-checkbox"><label for="service3" class="form-checkbox-label">المنهجية والإجراءات</label></div>
+                        <div><input type="checkbox" id="service4" name="service" class="form-checkbox"><label for="service4" class="form-checkbox-label">تطوير أدوات البحث (استبيان)</label></div>
+                        <div><input type="checkbox" id="service5" name="service" class="form-checkbox"><label for="service5" class="form-checkbox-label">التحليل الإحصائي (SPSS)</label></div>
+                        <div><input type="checkbox" id="service6" name="service" class="form-checkbox"><label for="service6" class="form-checkbox-label">مناقشة النتائج والتوصيات</label></div>
+                        <div><input type="checkbox" id="service7" name="service" class="form-checkbox"><label for="service7" class="form-checkbox-label">تدقيق لغوي وتنسيق نهائي</label></div>
+                        <div class="sm:col-span-2 lg:col-span-3"><input type="checkbox" id="service_full" name="service" class="form-checkbox"><label for="service_full" class="form-checkbox-label text-center block w-full bg-blue-50">🚀 **إعداد البحث بالكامل (من الخطة إلى التسليم النهائي)**</label></div>
+                     </div>
+                </div>
+
+                <!-- القسم الثالث: المستندات المتاحة -->
+                <div class="space-y-6">
+                    <h2 class="text-2xl font-bold border-b-2 border-gray-200 pb-2 text-gray-800">القسم الثالث: المستندات والملفات المتاحة</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="proposalFile" class="form-label block mb-2">خطة البحث المعتمدة<span class="required-star">*</span></label>
+                            <input type="file" id="proposalFile" class="form-input p-2">
+                        </div>
+                        <div>
+                            <label for="styleGuideFile" class="form-label block mb-2">دليل الكتابة الخاص بالجامعة</label>
+                            <input type="file" id="styleGuideFile" class="form-input p-2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- القسم الرابع: ملاحظات إضافية -->
+                <div class="space-y-6">
+                     <h2 class="text-2xl font-bold border-b-2 border-gray-200 pb-2 text-gray-800">القسم الرابع: تفاصيل إضافية</h2>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                           <label for="deadline" class="form-label block mb-2">متى موعد التسليم النهائي المطلوب؟<span class="required-star">*</span></label>
+                           <input type="date" id="deadline" class="form-input" required>
+                        </div>
+                     </div>
+                     <div>
+                        <label for="supervisorNotes" class="form-label block mb-2">هل لديك أي ملاحظات محددة من مشرفك الأكاديمي؟</label>
+                        <textarea id="supervisorNotes" rows="4" class="form-textarea" placeholder="اكتب هنا أي توجيهات أو نقاط تركيز طلبها مشرفك..."></textarea>
+                     </div>
+                </div>
+
+                <!-- زر الإرسال -->
+                <div class="pt-6">
+                    <button type="submit" class="submit-btn">إرسال الطلب</button>
+                </div>
+
+                <div class="text-center text-sm text-gray-500 pt-4">
+                    <p><span class="required-star">*</span> المعلومات التي تحمل هذه العلامة ضرورية لتقديم عرض دقيق.</p>
+                    <p>سيتم التعامل مع جميع المعلومات بسرية تامة.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

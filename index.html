@@ -1,0 +1,660 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة متابعة مشروع تطوير المناهج</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony Neutrals -->
+    <!-- Application Structure Plan: A single-page dashboard structure is used to provide a high-level overview first, followed by thematic, interactive sections. The user flow is guided by a sticky navigation bar, allowing non-linear exploration of the courses, development methodology, quality assurance process, and timeline. This structure was chosen over a linear report format to make the dense, process-oriented information more accessible and engaging for stakeholders who need to grasp key project metrics and stages quickly. Key interactions include course filtering, clickable process steps, and expandable deliverable details. -->
+    <!-- Visualization & Content Choices: 
+        - Project KPIs (Goal: Inform): Presented as large numbers for immediate impact. Method: HTML/Tailwind. Interaction: None. Justification: Provides a quick, scannable summary of the project's scale.
+        - Course List (Goal: Organize/Inform): Presented as interactive cards with icons and expandable content structure. Method: HTML/Tailwind, JS for filtering and accordion toggle. Interaction: Filtering by category, clicking card to expand/collapse content. Justification: Allows users to easily browse, focus on specific course areas, and drill down into the academic content structure without navigating away.
+        - Course Categories (Goal: Compare): A donut chart to show the distribution of courses. Method: Chart.js Canvas. Interaction: Hover tooltips. Justification: Visually summarizes the thematic balance of the curriculum.
+        - Development Process (Goal: Change/Process): An interactive stepper diagram. Method: HTML/Tailwind, JS for click events. Interaction: Clicking a stage reveals details. Justification: Clearly visualizes the linear, multi-stage workflow in a more engaging way than a simple list.
+        - Timeline (Goal: Change): A horizontal bar chart. Method: Chart.js Canvas. Interaction: Hover tooltips. Justification: Provides an intuitive visual representation of the project's schedule and phase durations.
+        - Deliverables (Goal: Organize): An expandable accordion list. Method: HTML/Tailwind, JS for toggling. Interaction: Clicking to expand/collapse. Justification: Manages information density by hiding details until the user requests them.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8f7f4;
+            color: #4a4a4a;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 300px;
+            width: 100%;
+            max-width: 500px;
+        }
+        .timeline-chart-container {
+            position: relative;
+            margin: auto;
+            height: 350px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .smooth-scroll {
+            scroll-behavior: smooth;
+        }
+        .card-bg {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+        }
+        .active-nav {
+            color: #2563eb;
+            font-weight: 700;
+        }
+        .inactive-nav {
+            color: #4a4a4a;
+        }
+        .section-title {
+            color: #1e3a8a;
+        }
+        .kpi-box {
+             background-color: rgba(255, 255, 255, 0.7);
+             backdrop-filter: blur(10px);
+             border: 1px solid rgba(230, 230, 230, 0.8);
+        }
+        .highlight {
+            background-color: #fde68a; /* Tailwind yellow-200 */
+            padding: 1px 2px;
+            border-radius: 3px;
+        }
+        .logo-img {
+            height: 40px; /* Adjust as needed */
+            width: auto;
+        }
+        .course-detail-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .course-detail-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .course-detail-close {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #4a4a4a;
+        }
+        .download-pdf-btn {
+            background-color: #ef4444; /* Red color for download */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="smooth-scroll">
+
+    <!-- Header & Navigation -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-sm shadow-md">
+        <nav class="container mx-auto px-6 py-3 flex flex-col md:flex-row items-center justify-between">
+            <div class="flex items-center justify-between w-full md:w-auto mb-3 md:mb-0">
+                <div class="flex items-center">
+                    <!-- University Logo Placeholder (removed actual image) -->
+                    <h1 class="text-xl font-bold section-title">خطة تطوير المناهج</h1>
+                </div>
+                <div class="md:hidden">
+                    <select id="mobile-nav" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <option value="#overview">نظرة عامة</option>
+                        <option value="#courses">المقررات</option>
+                        <option value="#methodology">المنهجية</option>
+                        <option value="#qa">الجودة</option>
+                        <option value="#timeline">الجدول الزمني</option>
+                    </select>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center space-x-8 lg:space-x-10 rtl:space-x-reverse">
+                <a href="#overview" class="nav-link inactive-nav">نظرة عامة</a>
+                <a href="#courses" class="nav-link inactive-nav">المقررات الدراسية</a>
+                <a href="#methodology" class="nav-link inactive-nav">منهجية التطوير</a>
+                <a href="#qa" class="nav-link inactive-nav">ضمان الجودة</a>
+                <a href="#timeline" class="nav-link inactive-nav">الجدول الزمني</a>
+            </div>
+            <div class="flex items-center mt-3 md:mt-0 w-full md:w-auto">
+                <input type="text" id="search-input" placeholder="ابحث في المحتوى..." class="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button id="search-button" class="ml-2 rtl:mr-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">بحث</button>
+                <button id="clear-search-button" class="ml-2 rtl:mr-2 px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm hidden">مسح</button>
+                <!-- Nawat Al Reyadah Logo (removed actual image) -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        
+        <!-- Section 1: Overview -->
+        <section id="overview" class="py-12 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4 section-title">مشروع تطوير مقررات التعليم العام (GEP).</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600 mb-10">
+                يهدف هذا المشروع الاستراتيجي، المقدم كهدية مبتكرة من منصة نواة الريادة للجامعة، إلى تطوير 11 مقررًا جامعيًا لبرنامج التعليم العام. تم تصميم هذه المقررات لتكون ذاتية التعلم ومتوافقة تمامًا مع المعايير الأكاديمية الوطنية والدولية، بهدف تزويد الطلاب بالمهارات الأساسية اللازمة للنجاح في عالم اليوم والمستقبل.
+            </p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                <div class="p-6 kpi-box rounded-xl shadow-sm text-center">
+                    <p class="text-4xl font-bold text-blue-600">11</p>
+                    <p class="text-md text-gray-700 mt-2">مقررًا دراسيًا.</p>
+                </div>
+                <div class="p-6 kpi-box rounded-xl shadow-sm text-center">
+                    <p class="text-4xl font-bold text-blue-600">3</p>
+                    <p class="text-md text-gray-700 mt-2">ساعات معتمدة لكل مقرر.</p>
+                </div>
+                <div class="p-6 kpi-box rounded-xl shadow-sm text-center">
+                    <p class="text-4xl font-bold text-blue-600">4</p>
+                    <p class="text-md text-gray-700 mt-2">مراحل للتطوير.</p>
+                </div>
+                <div class="p-6 kpi-box rounded-xl shadow-sm text-center">
+                    <p class="text-4xl font-bold text-blue-600">14-16</p>
+                    <p class="text-md text-gray-700 mt-2">أسبوعًا للتنفيذ.</p>
+                </div>
+            </div>
+            <button id="downloadFullReportPdfBtn" class="download-pdf-btn mt-10 bg-green-600 hover:bg-green-700">تنزيل التقرير الشامل (PDF)</button>
+        </section>
+
+        <!-- Section 2: Courses -->
+        <section id="courses" class="py-16 bg-gray-50 rounded-2xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold section-title">المقررات الدراسية المقترحة.</h2>
+                <p class="max-w-2xl mx-auto text-gray-600 mt-4">
+                    استكشف قائمة المقررات المتنوعة التي تشكل نواة برنامج التعليم العام. يمكنك تصفية المقررات حسب المجال لرؤية التوزيع الموضوعي، والنقر على كل مقرر لعرض هيكلة المادة العلمية.
+                </p>
+            </div>
+            
+            <div class="lg:flex lg:space-x-8 rtl:space-x-reverse">
+                <div class="lg:w-2/3">
+                     <div class="flex flex-wrap justify-center gap-2 mb-8">
+                        <button class="course-filter-btn active-filter px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-full" data-category="all">الكل.</button>
+                        <button class="course-filter-btn px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-full" data-category="اللغات">اللغات.</button>
+                        <button class="course-filter-btn px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-full" data-category="الدراسات الوطنية">الدراسات الوطنية.</button>
+                        <button class="course-filter-btn px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-full" data-category="العلوم والتكنولوجيا">العلوم والتكنولوجيا.</button>
+                        <button class="course-filter-btn px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-full" data-category="الأعمال والتمويل">الأعمال والتمويل.</button>
+                        <button class="course-filter-btn px-4 py-2 text-sm font-medium bg-white border border-gray-300 rounded-full" data-category="الصحة والمجتمع">الصحة والمجتمع.</button>
+                    </div>
+                    <div id="courses-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Course cards will be inserted here by JS -->
+                    </div>
+                </div>
+                <div class="lg:w-1/3 mt-12 lg:mt-0">
+                    <div class="card-bg p-6 rounded-xl shadow-md">
+                        <h3 class="text-xl font-bold text-center mb-4 section-title">توزيع المقررات حسب المجال.</h3>
+                        <div class="chart-container">
+                            <canvas id="courses-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section for Detailed Course Content -->
+        <section id="detailed-courses" class="py-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold section-title">الهيكلية التفصيلية للمقررات.</h2>
+                <p class="max-w-2xl mx-auto text-gray-600 mt-4">
+                    استعرض الأهداف، مخرجات التعلم، وهيكلة الوحدات لكل مقرر دراسي، وقم بتنزيل المحتوى بصيغة PDF.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="detailed-course-buttons-container">
+                <!-- Buttons for each detailed course will be inserted here by JS -->
+            </div>
+            <!-- The generic course detail display div (hidden by default) -->
+            <div id="course-detail-display" class="card-bg p-8 rounded-xl shadow-lg hidden">
+                <!-- Detailed course content for non-STAT101 courses will be displayed here -->
+            </div>
+        </section>
+
+        <!-- Section 3: Methodology -->
+        <section id="methodology" class="py-16">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold section-title">منهجية التطوير.</h2>
+                <p class="max-w-2xl mx-auto text-gray-600 mt-4">
+                    تتبع عملية تطوير المناهج إطار عمل منظم من أربع مراحل متكاملة، تضمن تحقيق الجودة العالية والمواءمة الكاملة مع المعايير المطلوبة.
+                </p>
+            </div>
+            <div id="methodology-stepper" class="relative max-w-4xl mx-auto">
+                <!-- Stepper will be inserted here by JS -->
+            </div>
+            <div id="methodology-content" class="mt-8 max-w-4xl mx-auto p-6 card-bg rounded-xl shadow-sm min-h-[150px]">
+                <!-- Content for selected step will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Section 4: Quality Assurance -->
+        <section id="qa" class="py-16 bg-gray-50 rounded-2xl">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold section-title">ضمان الجودة والامتثال.</h2>
+                <p class="max-w-2xl mx-auto text-gray-600 mt-4">
+                    الجودة ليست مرحلة أخيرة، بل هي عملية مستمرة ومدمجة في كل خطوة من خطوات التطوير لضمان الامتثال للمعايير الوطنية والدولية.
+                </p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <div class="card-bg p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-lg text-blue-700 mb-2">الامتثال الفني.</h3>
+                    <p class="text-gray-600 text-sm">مواءمة كاملة مع إطار المؤهلات الوطني (QFEmirates) المستوى 6، لضمان الاعتراف الأكاديمي والجودة.</p>
+                </div>
+                <div class="card-bg p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-lg text-blue-700 mb-2">مراجعة الأقران.</h3>
+                    <p class="text-gray-600 text-sm">مراجعة داخلية دقيقة لكل مقرر من قبل خبراء أكاديميين لضمان السلامة العلمية والتربوية.</p>
+                </div>
+                <div class="card-bg p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-lg text-blue-700 mb-2">صلاحية التقييم.</h3>
+                    <p class="text-gray-600 text-sm">التحقق من أن أدوات التقييم تقيس مخرجات التعلم المقصودة بفعالية وعدالة.</p>
+                </div>
+                <div class="card-bg p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-lg text-blue-700 mb-2">مراجعات تكرارية.</h3>
+                    <p class="text-gray-600 text-sm">دمج ملاحظات العميل والفريق بشكل مستمر لتحسين المخرجات النهائية.</p>
+                </div>
+                <div class="card-bg p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-lg text-blue-700 mb-2">معايير الاعتماد.</h3>
+                    <p class="text-gray-600 text-sm">الالتزام بمتطلبات هيئة الاعتماد الأكاديمي (CAA) و (SACSCOC) لضمان القبول والاعتراف الدولي.</p>
+                </div>
+                 <div class="card-bg p-6 rounded-xl shadow-sm">
+                    <h3 class="font-bold text-lg text-blue-700 mb-2">السياق المحلي.</h3>
+                    <p class="text-gray-600 text-sm">دمج المحتوى والأمثلة ذات الصلة بالثقافة والسياق الإماراتي لتعزيز الفهم والمشاركة.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Timeline & Deliverables -->
+        <section id="timeline" class="py-16">
+             <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold section-title">الجدول الزمني والمخرجات.</h2>
+                 <p class="max-w-2xl mx-auto text-gray-600 mt-4">
+                    نظرة شاملة على الجدول الزمني المقترح للمشروع والذي يغطي مراحل إعداد المناهج وتطوير المحتوى المرئي، بالإضافة إلى المخرجات النهائية المتوقعة لكل مقرر دراسي.
+                </p>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-12 items-start">
+                <div>
+                    <h3 class="text-2xl font-bold text-center mb-6 section-title">الجدول الزمني للمشروع.</h3>
+                     <div class="timeline-chart-container">
+                        <canvas id="timeline-chart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold text-center mb-6 section-title">المخرجات الرئيسية لكل مقرر.</h3>
+                    <div id="deliverables-accordion" class="space-y-3">
+                        <!-- Accordion items will be inserted here by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white text-center p-4">
+        <p>&copy; 2025 - خطة تطوير المناهج الجامعية. جميع الحقوق محفوظة.</p>
+    </footer>
+
+    <!-- Generic Course Detail Modal (hidden by default) -->
+    <div id="courseDetailModal" class="course-detail-modal hidden">
+        <div class="course-detail-content" id="pdf-content-target">
+            <span class="course-detail-close">&times;</span>
+            <h2 class="text-3xl font-bold text-center mb-4 section-title" id="modal-course-title"></h2>
+            <h3 class="text-xl font-bold mb-2 text-blue-700">هدف المقرر:</h3>
+            <p class="text-gray-700 mb-4" id="modal-course-goal"></p>
+            <h3 class="text-xl font-bold mb-2 text-blue-700">مخرجات التعلم (ILOs):</h3>
+            <ul class="list-disc pr-5 text-gray-700 mb-4" id="modal-course-ilos"></ul>
+            <h3 class="text-xl font-bold mb-2 text-blue-700">هيكلة الوحدات (8 أسابيع):</h3>
+            <div class="overflow-x-auto mb-4">
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="py-2 px-4 border-b text-right">الأسبوع</th>
+                            <th class="py-2 px-4 border-b text-right">الموضوعات الرئيسية</th>
+                            <th class="py-2 px-4 border-b text-right">الأنشطة والتقييمات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modal-course-units">
+                        <!-- Unit rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-blue-700">المصادر التعليمية المقترحة:</h3>
+            <div class="text-gray-700" id="modal-course-resources"></div>
+            <button id="downloadPdfBtn" class="download-pdf-btn">تنزيل PDF</button>
+        </div>
+    </div>
+
+    <!-- STAT101 Specific Modal (hidden by default) -->
+    <div id="stat101DetailModal" class="course-detail-modal hidden">
+        <div class="course-detail-content" id="stat101-pdf-content-target">
+            <span class="course-detail-close" id="stat101-close-btn">&times;</span>
+            <h2 class="text-3xl font-bold text-center mb-4 section-title" id="stat101-modal-title"></h2>
+            <p class="text-gray-700 mb-6 text-lg" id="stat101-modal-intro"></p>
+
+            <h3 class="text-xl font-bold mb-2 text-blue-700">هدف المقرر:</h3>
+            <p class="text-gray-700 mb-4" id="stat101-modal-goal"></p>
+
+            <h3 class="text-xl font-bold mb-2 text-blue-700">مخرجات التعلم (ILOs):</h3>
+            <ul class="list-disc pr-5 text-gray-700 mb-4" id="stat101-modal-ilos"></ul>
+
+            <div id="stat101-video-embed" class="mb-6"></div>
+
+            <h3 class="text-xl font-bold mb-2 text-blue-700">الوحدات التعليمية (9 وحدات – تغطي دورة حياة البيانات):</h3>
+            <div class="space-y-3 mb-4" id="stat101-modal-units-accordion">
+                <!-- Units will be inserted here as accordions -->
+            </div>
+
+            <h3 class="text-xl font-bold mb-2 text-blue-700">المصادر التعليمية:</h3>
+            <div class="text-gray-700 mb-4" id="stat101-modal-resources"></div>
+
+            <div id="stat101-modal-innovation" class="mb-4"></div>
+
+            <button id="stat101DownloadPdfBtn" class="download-pdf-btn">تنزيل PDF لمقرر إدارة وتحليل البيانات</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const coursesData = [
+            { code: 'ENGL101', title_ar: 'اللغة الإنجليزية 101', title_en: 'English 101', category: 'اللغات', icon: '📖',
+              goal: 'تطوير مهارات القراءة والكتابة الأكاديمية والتواصل الشفهي لدى طلاب السنة الأولى بالجامعة.',
+              ilos: [
+                'قراءة وفهم النصوص الأكاديمية الأساسية.',
+                'كتابة مقالات أكاديمية قصيرة بشكل واضح ومنظم.',
+                'تطبيق قواعد اللغة والنحو في سياق أكاديمي.',
+                'إجراء عروض تقديمية قصيرة باللغة الإنجليزية.'
+              ],
+              units: [
+                { week: 1, topic: 'مقدمة في الكتابة الأكاديمية', activities: 'تمرين: كتابة فقرة تعريفية شخصية' },
+                { week: 2, topic: 'بناء الجمل والفقرات الأساسية', activities: 'واجب: تكوين جمل وفقرات قصيرة' },
+                { week: 3, topic: 'استراتيجيات القراءة الفعالة', activities: 'نشاط: تحليل نص أكاديمي قصير' },
+                { week: 4, topic: 'القواعد النحوية (Grammar Essentials)', activities: 'اختبار قصير: قواعد الجملة الأساسية' },
+                { week: 5, topic: 'الكتابة الوصفية والسردية', activities: 'واجب: كتابة مقال وصفي قصير' },
+                { week: 6, topic: 'تطوير مهارات الاستماع والتحدث', activities: 'عرض تقديمي شفهي بسيط' },
+                { week: 7, topic: 'الكتابة التحليلية (Analytical Writing)', activities: 'تمرين: تحليل مقال قصير' },
+                { week: 8, topic: 'المراجعة والتقييم النهائي', activities: 'اختبار كتابي نهائي' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "Academic Writing Essentials" - Cambridge University Press.</p>
+                <p><strong>مصادر إلكترونية:</strong></p>
+                <ul class="list-disc pr-5">
+                    <li><a href="https://owl.purdue.edu/" target="_blank" class="text-blue-600 hover:underline">Purdue OWL</a></li>
+                    <li><a href="https://learnenglish.britishcouncil.org/" target="_blank" class="text-blue-600 hover:underline">British Council - Academic English</a></li>
+                </ul>
+              `,
+              content_structure: [
+                'مقدمة في الكتابة الأكاديمية',
+                'بناء الجمل والفقرات الأساسية',
+                'استراتيجيات القراءة الفعالة',
+                'القواعد النحوية (Grammar Essentials)',
+                'الكتابة الوصفية والسردية',
+                'تطوير مهارات الاستماع والتحدث',
+                'الكتابة التحليلية (Analytical Writing)',
+                'المراجعة والتقييم النهائي'
+              ],
+              completion_percentage: '60%'
+            },
+            { code: 'ENGL102', title_ar: 'اللغة الإنجليزية 102', title_en: 'English 102', category: 'اللغات', icon: '📖',
+              goal: 'تعزيز مهارات الكتابة والبحث الأكاديمي لدى طلاب الجامعة، مع التركيز على التفكير النقدي.',
+              ilos: [
+                'كتابة مقالات أكاديمية متقدمة (بحثية وتحليلية).',
+                'فهم النصوص الأكاديمية المعقدة وتحليلها نقديًا.',
+                'استخدام مصادر ومراجع بشكل صحيح وفقًا لأساليب التوثيق الأكاديمية.',
+                'تقديم عروض شفوية أكاديمية واضحة ومنطقية.'
+              ],
+              units: [
+                { week: 1, topic: 'مراجعة الكتابة الأكاديمية وأساليب البحث', activities: 'واجب: كتابة مقالة أكاديمية قصيرة' },
+                { week: 2, topic: 'مهارات القراءة والتحليل النقدي للنصوص', activities: 'نشاط: تحليل نقدي لمقال أكاديمي' },
+                { week: 3, topic: 'القواعد النحوية المتقدمة (Advanced Grammar)', activities: 'اختبار قواعد لغوية متقدمة' },
+                { week: 4, topic: 'توثيق المصادر (APA & MLA)', activities: 'تمرين: إعداد قائمة مراجع لمقال' },
+                { week: 5, topic: 'كتابة المقالات الجدلية (Argumentative Essays)', activities: 'واجب: كتابة مقال جدلي قصير' },
+                { week: 6, topic: 'التفكير النقدي والمناقشة الأكاديمية', activities: 'عرض تقديمي أكاديمي نقدي' },
+                { week: 7, topic: 'كتابة الأبحاث الأكاديمية (Research Paper)', activities: 'مشروع: مسودة بحث أكاديمي قصير' },
+                { week: 8, topic: 'مراجعة شاملة واختبار نهائي', activities: 'تسليم البحث النهائي + امتحان كتابي' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "They Say / I Say: The Moves That Matter in Academic Writing".</p>
+                <p><strong>مصادر إلكترونية:</strong></p>
+                <ul class="list-disc pr-5">
+                    <li><a href="https://www.grammarly.com/" target="_blank" class="text-blue-600 hover:underline">Grammarly</a></li>
+                    <li><a href="https://www.easybib.com/guides/" target="_blank" class="text-blue-600 hover:underline">EasyBib - Citation Guide</a></li>
+                </ul>
+              `,
+              content_structure: [
+                'مراجعة الكتابة الأكاديمية وأساليب البحث',
+                'مهارات القراءة والتحليل النقدي للنصوص',
+                'القواعد النحوية المتقدمة (Advanced Grammar)',
+                'توثيق المصادر (APA & MLA)',
+                'كتابة المقالات الجدلية (Argumentative Essays)',
+                'التفكير النقدي والمناقشة الأكاديمية',
+                'كتابة الأبحاث الأكاديمية (Research Paper)',
+                'مراجعة شاملة واختبار نهائي'
+              ],
+              completion_percentage: '60%'
+            },
+            { code: 'UAE103-EN', title_ar: 'دراسات إماراتية (إنجليزي)', title_en: 'UAE Studies (English)', category: 'الدراسات الوطنية', icon: '🇦🇪',
+              goal: 'تعريف الطلاب بالتراث الثقافي والتاريخي والاجتماعي لدولة الإمارات العربية المتحدة باللغة الإنجليزية.',
+              ilos: [
+                'شرح تاريخ الإمارات وتطورها الحضاري.',
+                'تحديد السمات الرئيسية للتراث الإماراتي.',
+                'وصف العادات والتقاليد الاجتماعية في الإمارات.',
+                'تحليل دور الإمارات في السياقين الإقليمي والدولي.'
+              ],
+              units: [
+                { week: 1, topic: 'مقدمة في تاريخ دولة الإمارات', activities: 'واجب: كتابة ملخص عن تاريخ الإمارات' },
+                { week: 2, topic: 'التراث الثقافي والفنون الشعبية', activities: 'نشاط: تقديم حول فن شعبي إماراتي' },
+                { week: 3, topic: ' العادات والتقاليد الاجتماعية', activities: 'مناقشة جماعية (Forum Discussion)' },
+                { week: 4, topic: 'الاقتصاد الإماراتي والتنمية المستدامة', activities: 'تمرين تحليلي حول مبادرات الإمارات البيئية' },
+                { week: 5, topic: 'السياسة الخارجية ودور الإمارات العالمي', activities: 'مشروع: تقرير قصير عن الدبلوماسية الإماراتية' },
+                { week: 6, topic: 'الابتكار والريادة في الإمارات', activities: 'عرض تقديمي قصير' },
+                { week: 7, topic: 'التسامح والتنوع الثقافي في الإمارات', activities: 'تمرين كتابي: مقال عن قيم التسامح' },
+                { week: 8, topic: 'مراجعة وتقييم نهائي', activities: 'اختبار شامل' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "The United Arab Emirates: Power, Politics and Policy-Making".</p>
+                <p><strong>موقع إلكتروني رسمي:</strong> <a href="https://www.tolerance.gov.ae/" target="_blank" class="text-blue-600 hover:underline">UAE Year of Tolerance</a></p>
+              `,
+              content_structure: [
+                'مقدمة في تاريخ دولة الإمارات',
+                'التراث الثقافي والفنون الشعبية',
+                'العادات والتقاليد الاجتماعية',
+                'الاقتصاد الإماراتي والتنمية المستدامة',
+                'السياسة الخارجية ودور الإمارات العالمي',
+                'الابتكار والريادة في الإمارات',
+                'التسامح والتنوع الثقافي في الإمارات',
+                'مراجعة وتقييم نهائي'
+              ],
+              completion_percentage: '55%'
+            },
+            { code: 'UAE103-AR', title_ar: 'دراسات إماراتية (عربي)', title_en: 'UAE Studies (Arabic)', category: 'الدراسات الوطنية', icon: '🇦🇪',
+              goal: 'تعزيز الهوية الوطنية الإماراتية والمعرفة بالتاريخ والتراث المحلي لدى الطلبة العرب.',
+              ilos: [
+                'التعريف بتاريخ الإمارات وجذورها الحضارية.',
+                'إبراز مكونات الهوية الوطنية الإماراتية.',
+                'فهم وتقدير التراث الشعبي والثقافي الإماراتي.',
+                'إدراك الدور الريادي لدولة الإمارات إقليميًا وعالميًا.'
+              ],
+              units: [
+                { week: 1, topic: 'نشأة دولة الإمارات وتاريخها', activities: 'واجب: تلخيص نص تاريخي' },
+                { week: 2, topic: 'مكونات الهوية الوطنية الإماراتية', activities: 'نقاش جماعي حول الهوية الوطنية' },
+                { week: 3, topic: 'التراث الإماراتي والفنون الشعبية', activities: 'نشاط عملي: إعداد عرض تراثي' },
+                { week: 4, topic: 'الحياة الاجتماعية والتقاليد', activities: 'تمرين: بحث ميداني قصير' },
+                { week: 5, topic: 'اقتصاد الإمارات والتنمية', activities: 'مشروع: بحث عن رؤية الإمارات 2030' },
+                { week: 6, topic: 'الإمارات والتسامح والتعايش', activities: 'عرض تقديمي جماعي' },
+                { week: 7, topic: 'الابتكار في دولة الإمارات', activities: 'مقالة قصيرة عن الابتكار الإماراتي' },
+                { week: 8, topic: 'مراجعة وتقييم نهائي', activities: 'اختبار نهائي شامل' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "تاريخ دولة الإمارات العربية المتحدة" – د. محمد عبد الله المطوع.</p>
+                <p><strong>موقع إلكتروني:</strong> <a href="https://www.na.ae/ar/" target="_blank" class="text-blue-600 hover:underline">الأرشيف الوطني الإماراتي</a></p>
+              `,
+              content_structure: [
+                'نشأة دولة الإمارات وتاريخها',
+                'مكونات الهوية الوطنية الإماراتية',
+                'التراث الإماراتي والفنون الشعبية',
+                'الحياة الاجتماعية والتقاليد',
+                'اقتصاد الإمارات والتنمية',
+                'الإمارات والتسامح والتعايش',
+                'الابتكار في دولة الإمارات',
+                'مراجعة وتقييم نهائي'
+              ],
+              completion_percentage: '55%'
+            },
+            { code: 'AI101', title_ar: 'أساسيات الذكاء الاصطناعي', title_en: 'AI Fundamentals', category: 'العلوم والتكنولوجيا', icon: '💡',
+              goal: 'تقديم مبادئ وأسس الذكاء الاصطناعي للطلاب من مختلف التخصصات، وتنمية التفكير النقدي حول تطبيقاته وآثاره.',
+              ilos: [
+                'تعريف المفاهيم الأساسية للذكاء الاصطناعي.',
+                'شرح تطبيقات الذكاء الاصطناعي في الحياة اليومية.',
+                'تحليل التحديات الأخلاقية والمجتمعية للذكاء الاصطناعي.',
+                'تطبيق أدوات بسيطة للذكاء الاصطناعي عمليًا.'
+              ],
+              units: [
+                { week: 1, topic: 'مقدمة حول الذكاء الاصطناعي وتاريخه', activities: 'نقاش جماعي حول تطبيقات الذكاء الاصطناعي' },
+                { week: 2, topic: 'تعلم الآلة (Machine Learning)', activities: 'تمرين عملي بسيط على خوارزمية تعلّم الآلة' },
+                { week: 3, topic: 'الشبكات العصبية والتعلم العميق', activities: 'اختبار قصير عن المفاهيم الأساسية' },
+                { week: 4, topic: 'الذكاء الاصطناعي في التطبيقات اليومية', activities: 'مقال قصير عن أحد التطبيقات اليومية' },
+                { week: 5, topic: 'الذكاء الاصطناعي والأخلاقيات', activities: 'نقاش تفاعلي حول التحديات الأخلاقية' },
+                { week: 6, topic: 'الروبوتات والنظم الذكية', activities: 'مشروع جماعي: عرض تقديمي' },
+                { week: 7, topic: 'مستقبل الذكاء الاصطناعي', activities: 'تمرين استشراف المستقبل' },
+                { week: 8, topic: 'مراجعة شاملة وتقييم نهائي', activities: 'اختبار نهائي عملي ونظري' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "Artificial Intelligence: A Modern Approach" - Stuart Russell and Peter Norvig.</p>
+                <p><strong>مصادر إلكترونية:</strong></p>
+                <ul class="list-disc pr-5">
+                    <li><a href="https://www.ibm.com/cloud/learn/what-is-artificial-intelligence" target="_blank" class="text-blue-600 hover:underline">IBM - What is AI?</a></li>
+                    <li><a href="https://www.coursera.org/courses?query=artificial%20intelligence" target="_blank" class="text-blue-600 hover:underline">Coursera AI Courses</a></li>
+                </ul>
+              `,
+              content_structure: [
+                'مقدمة حول الذكاء الاصطناعي وتاريخه',
+                'تعلم الآلة (Machine Learning)',
+                'الشبكات العصبية والتعلم العميق',
+                'الذكاء الاصطناعي في التطبيقات اليومية',
+                'الذكاء الاصطناعي والأخلاقيات',
+                'الروبوتات والنظم الذكية',
+                'مستقبل الذكاء الاصطناعي',
+                'مراجعة شاملة وتقييم نهائي'
+              ],
+              completion_percentage: '50%'
+            },
+            { code: 'INEN201', title_ar: 'الابتكار وريادة الأعمال', title_en: 'Innovation & Entrepreneurship', category: 'الأعمال والتمويل', icon: '🚀',
+              goal: 'تطوير التفكير الابتكاري والريادي لدى الطلبة، وتمكينهم من تحويل الأفكار إلى مشاريع ناجحة.',
+              ilos: [
+                'فهم أساسيات الابتكار وريادة الأعمال.',
+                'تطوير أفكار مبتكرة وتحويلها إلى مشاريع.',
+                'فهم نماذج الأعمال وخطط المشاريع.',
+                'مهارات العمل ضمن فريق ريادي.'
+              ],
+              units: [
+                { week: 1, topic: 'أساسيات الابتكار وريادة الأعمال', activities: 'تمرين توليد الأفكار' },
+                { week: 2, topic: 'تطوير نماذج الأعمال', activities: 'ورشة عمل: تصميم نموذج أعمال بسيط' },
+                { week: 3, topic: 'تحليل السوق والمنافسين', activities: 'بحث قصير عن المنافسين' },
+                { week: 4, topic: 'خطط الأعمال والتمويل', activities: 'إعداد خطة عمل مختصرة' },
+                { week: 5, topic: 'مهارات الاتصال والعرض', activities: 'عرض تقديمي موجز' },
+                { week: 6, topic: 'الابتكار الاجتماعي وريادة التأثير', activities: 'تمرين: فكرة مشروع اجتماعي' },
+                { week: 7, topic: 'حالات دراسية ناجحة', activities: 'تحليل ودراسة حالات ناجحة' },
+                { week: 8, topic: 'تقديم مشروع ريادي متكامل', activities: 'مشروع ختامي: عرض تقديمي كامل' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "The Lean Startup" - Eric Ries.</p>
+                <p><strong>مصادر إلكترونية:</strong></p>
+                <ul class="list-disc pr-5">
+                    <li><a href="https://www.startup.ae/" target="_blank" class="text-blue-600 hover:underline">Startup.ae</a></li>
+                    <li><a href="https://www.harvard.edu/innovation/" target="_blank" class="text-blue-600 hover:underline">Harvard Innovation Labs</a></li>
+                </ul>
+              `,
+              content_structure: [
+                'أساسيات الابتكار وريادة الأعمال',
+                'تطوير نماذج الأعمال',
+                'تحليل السوق والمنافسين',
+                'خطط الأعمال والتمويل',
+                'مهارات الاتصال والعرض',
+                'الابتكار الاجتماعي وريادة التأثير',
+                'حالات دراسية ناجحة',
+                'تقديم مشروع ريادي متكامل'
+              ],
+              completion_percentage: '50%'
+            },
+            { code: 'MATH101', title_ar: 'الرياضيات العامة', title_en: 'General Mathematics', category: 'العلوم والتكنولوجيا', icon: '🧮',
+              goal: 'تعزيز المفاهيم الرياضية الأساسية وتطبيقاتها العملية في الحياة اليومية والتخصصات المختلفة.',
+              ilos: [
+                'استخدام العمليات الحسابية والمنطق الرياضي.',
+                'فهم وتطبيق مفاهيم الجبر والإحصاء.',
+                'حل مسائل رياضية واقعية.',
+                'التحليل الرياضي لحالات بسيطة.'
+              ],
+              units: [
+                { week: 1, topic: 'العمليات الحسابية الأساسية', activities: 'تمرين مسائل حسابية بسيطة' },
+                { week: 2, topic: 'الجبر الأساسي والمعادلات', activities: 'اختبار قصير عن الجبر' },
+                { week: 3, topic: 'مفاهيم أساسية في الإحصاء', activities: 'مشروع صغير لجمع وتحليل بيانات' },
+                { week: 4, topic: 'الرياضيات المالية', activities: 'تمرين حول الفوائد والقروض' },
+                { week: 5, topic: 'تطبيقات رياضية في الحياة', activities: 'نقاش جماعي وحل مسائل تطبيقية' },
+                { week: 6, topic: 'المنطق والتفكير الرياضي', activities: 'اختبار عن المنطق والتفكير الرياضي' },
+                { week: 7, topic: 'مراجعة شاملة', activities: 'حل تمارين ومسائل مركبة' },
+                { week: 8, topic: 'اختبار نهائي شامل', activities: 'اختبار تحريري شامل' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "Basic Mathematics" - Serge Lang.</p>
+                <p><strong>مصادر إلكترونية:</strong></p>
+                <ul class="list-disc pr-5">
+                    <li><a href="https://www.khanacademy.org/math" target="_blank" class="text-blue-600 hover:underline">Khan Academy - Math</a></li>
+                    <li><a href="https://www.mathsisfun.com/" target="_blank" class="text-blue-600 hover:underline">Math Is Fun</a></li>
+                </ul>
+              `,
+              content_structure: [
+                'العمليات الحسابية الأساسية',
+                'الجبر الأساسي والمعادلات',
+                'مفاهيم أساسية في الإحصاء',
+                'الرياضيات المالية',
+                'تطبيقات رياضية في الحياة',
+                'المنطق والتفكير الرياضي',
+                'مراجعة شاملة',
+                'اختبار نهائي شامل'
+              ],
+              completion_percentage: '50%'
+            },
+            { code: 'FIN101', title_ar: 'التمويل الشخصي', title_en: 'Personal Finance', category: 'الأعمال والتمويل', icon: '💰',
+              goal: 'تمكين الطلاب من إدارة مواردهم المالية بشكل فعّال واتخاذ قرارات مالية ذكية.',
+              ilos: [
+                'إدارة الميزانية الشخصية.',
+                'فهم أساسيات الاستثمار والادخار.',
+                'تقييم المخاطر المالية والتخطيط المالي الشخصي.',
+                'تطبيق مهارات التخطيط المالي على أرض الواقع.'
+              ],
+              units: [
+                { week: 1, topic: 'إدارة الميزانية الشخصية', activities: 'تمرين إعداد ميزانية شخصية' },
+                { week: 2, topic: 'أساسيات الادخار والاستثمار', activities: 'ورشة عمل حول الادخار والاستثمار' },
+                { week: 3, topic: 'إدارة الديون والقروض', activities: 'تحليل حالة دراسية حول إدارة الدين' },
+                { week: 4, topic: 'أساسيات التأمين الشخصي', activities: 'تمرين قصير عن فهم وثائق التأمين' },
+                { week: 5, topic: 'التخطيط المالي طويل الأجل', activities: 'مشروع تخطيط مالي مبسط' },
+                { week: 6, topic: 'مخاطر الاستثمار وكيفية تجنبها', activities: 'نقاش حول المخاطر المالية' },
+                { week: 7, topic: 'التقنية المالية (FinTech)', activities: 'تمرين حول تطبيقات تقنية مالية' },
+                { week: 8, topic: 'المراجعة وتقييم نهائي', activities: 'اختبار نهائي' }
+              ],
+              resources: `
+                <p><strong>كتاب:</strong> "The Total Money Makeover" - Dave Ramsey.</p>
+                <p><strong>مصادر إلكترونية:</strong></p>
+                <ul class="list-disc pr-
